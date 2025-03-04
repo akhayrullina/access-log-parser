@@ -13,11 +13,9 @@ public class Main {
             System.out.print("Введите путь к файлу: ");
             String path = scanner.nextLine();
 
-            //Определяем, существует ли файл, путь к которому был указан
+            //Определяем, существует ли файл, путь к которому был указан. Является ли указанный путь путём именно к файлу, а не к папке
             File file = new File(path);
             boolean fileExists = file.exists();
-
-            //Определяем, является ли указанный путь путём именно к файлу, а не к папке
             boolean isDirectory = file.isDirectory();
 
             if (!fileExists || isDirectory) {
@@ -32,8 +30,8 @@ public class Main {
             try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
                 String line;
                 int lineCount = 0;
-                int maxLength = 0;
-                int minLength = Integer.MAX_VALUE;
+                int googlebotCount = 0;
+                int yandexbotCount = 0;
 
                 while ((line = reader.readLine()) != null) {
                     lineCount++;
@@ -44,19 +42,29 @@ public class Main {
                         throw new LineTooLongException("Строка превышает 1024 символа: " + length + " символов.");
                     }
 
-                    // Определение максимальной и минимальной длины
-                    if (length > maxLength) {
-                        maxLength = length;
-                    }
-                    if (length < minLength) {
-                        minLength = length;
+                    // Извлечение User-Agent и подсчет количества ботов
+                    String userAgent = extractUserAgent(line);
+                    if (!userAgent.equals("-")) {
+                        String bots = searchBots(userAgent);
+                        String botName = extractFragmentOfBots(bots);
+
+                        if (botName.equals("Googlebot")) {
+                            googlebotCount++;
+                        } else if (botName.equals("YandexBot")) {
+                            yandexbotCount++;
+                        }
                     }
                 }
 
                 // Вывод результатов
                 System.out.println("Общее количество строк в файле: " + lineCount);
-                System.out.println("Длина самой длинной строки: " + maxLength);
-                System.out.println("Длина самой короткой строки: " + (minLength == Integer.MAX_VALUE ? 0 : minLength));
+                if (lineCount > 0) {
+                    System.out.printf("Доля запросов от Googlebot: %.2f%%\n", (googlebotCount / (double) lineCount) * 100);
+                    System.out.printf("Доля запросов от YandexBot: %.2f%%\n", (yandexbotCount / (double) lineCount) * 100);
+                } else {
+                    System.out.println("Нет строк для анализа.");
+                }
+
 
             } catch (LineTooLongException e) {
                 System.err.println("Ошибка: " + e.getMessage());
@@ -67,4 +75,57 @@ public class Main {
         }
         scanner.close();
     }
+
+
+    public static String extractUserAgent(String logLine) {
+        // Находим индекс последней и предпоследней кавычки
+        int lastQuoteIndex = logLine.lastIndexOf("\"");
+        int secondLastQuoteIndex = logLine.lastIndexOf("\"", lastQuoteIndex - 1);
+
+        // Проверяем, что кавычки найдены
+        if (secondLastQuoteIndex == -1 || lastQuoteIndex == -1 || secondLastQuoteIndex >= lastQuoteIndex) {
+            return "-"; // Возвращаем знак минус, если User-Agent не найден
+        }
+
+        // Извлекаем строку между последней и предпоследней кавычками
+        return logLine.substring(secondLastQuoteIndex + 1, lastQuoteIndex).trim();
+    }
+
+    //Метод находит информацию о ботах и возвращает ее
+    public static String searchBots(String userAgent) {
+        String informationAboutBot = "";
+
+        //Находим информацию между первыми скобками
+        int firstBrackets = userAgent.indexOf("(");
+        int lastBrackets = userAgent.indexOf(")", firstBrackets);
+
+        // Проверяем, что обе скобки найдены
+        if (firstBrackets != -1 && lastBrackets != -1 && lastBrackets > firstBrackets) {
+            informationAboutBot = userAgent.substring(firstBrackets + 1, lastBrackets).trim();
+        }
+
+        return informationAboutBot;
+    }
+
+    //Метод извлекает информацию из фрагмента
+    public static String extractFragmentOfBots(String bots) {
+        String result = "0"; // По умолчанию, если ничего не найдено
+        // Разделяем строку по точке с запятой
+        String[] parts = bots.split(";");
+
+        // Проверяем, что есть хотя бы два фрагмента и очищаем от пробела
+        if (parts.length >= 2) {
+            String fragment = parts[1].trim();
+
+            // Находим индекс слэша
+            int slashIndex = fragment.indexOf("/");
+
+            // Если слэш есть, извлекаем часть до слэша
+            if (slashIndex != -1) {
+                result = fragment.substring(0, slashIndex).trim();
+            }
+        }
+        return result;
+    }
 }
+
