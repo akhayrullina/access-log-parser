@@ -32,6 +32,7 @@ public class Main {
                 int lineCount = 0;
                 int googlebotCount = 0;
                 int yandexbotCount = 0;
+                double trafficRate = 0;
 
                 while ((line = reader.readLine()) != null) {
                     lineCount++;
@@ -42,11 +43,15 @@ public class Main {
                         throw new LineTooLongException("Строка превышает 1024 символа: " + length + " символов.");
                     }
 
+                    //Создание нового объекта LogEntry
+                    LogEntry logEntry = new LogEntry(line);
+
                     // Извлечение User-Agent и подсчет количества ботов
-                    String userAgent = extractUserAgent(line);
+                    UserAgent userAgent = new UserAgent(logEntry.getUserAgent());
+//                    String userAgent = extractUserAgent(line);
                     if (!userAgent.equals("-")) {
-                        String bots = searchBots(userAgent);
-                        String botName = extractFragmentOfBots(bots);
+//                        String bots = searchBots(userAgent);
+                        String botName = userAgent.getBot();
 
                         if (botName.equals("Googlebot")) {
                             googlebotCount++;
@@ -54,6 +59,11 @@ public class Main {
                             yandexbotCount++;
                         }
                     }
+                    //Подсчет статистики средней скорости трафика
+                    Statistics stats = new Statistics();
+                    stats.addEntry(logEntry);
+                    trafficRate = stats.getTrafficRate();
+
                 }
 
                 // Вывод результатов
@@ -64,6 +74,7 @@ public class Main {
                 } else {
                     System.out.println("Нет строк для анализа.");
                 }
+                System.out.println("Средний объем трафика за час: " + trafficRate + " байт/час");
 
 
             } catch (LineTooLongException e) {
@@ -74,58 +85,6 @@ public class Main {
             }
         }
         scanner.close();
-    }
-
-
-    public static String extractUserAgent(String logLine) {
-        // Находим индекс последней и предпоследней кавычки
-        int lastQuoteIndex = logLine.lastIndexOf("\"");
-        int secondLastQuoteIndex = logLine.lastIndexOf("\"", lastQuoteIndex - 1);
-
-        // Проверяем, что кавычки найдены
-        if (secondLastQuoteIndex == -1 || lastQuoteIndex == -1 || secondLastQuoteIndex >= lastQuoteIndex) {
-            return "-"; // Возвращаем знак минус, если User-Agent не найден
-        }
-
-        // Извлекаем строку между последней и предпоследней кавычками
-        return logLine.substring(secondLastQuoteIndex + 1, lastQuoteIndex).trim();
-    }
-
-    //Метод находит информацию о ботах и возвращает ее
-    public static String searchBots(String userAgent) {
-        String informationAboutBot = "";
-
-        //Находим информацию между первыми скобками
-        int firstBrackets = userAgent.indexOf("(");
-        int lastBrackets = userAgent.indexOf(")", firstBrackets);
-
-        // Проверяем, что обе скобки найдены
-        if (firstBrackets != -1 && lastBrackets != -1 && lastBrackets > firstBrackets) {
-            informationAboutBot = userAgent.substring(firstBrackets + 1, lastBrackets).trim();
-        }
-
-        return informationAboutBot;
-    }
-
-    //Метод извлекает информацию из фрагмента
-    public static String extractFragmentOfBots(String bots) {
-        String result = "0"; // По умолчанию, если ничего не найдено
-        // Разделяем строку по точке с запятой
-        String[] parts = bots.split(";");
-
-        // Проверяем, что есть хотя бы два фрагмента и очищаем от пробела
-        if (parts.length >= 2) {
-            String fragment = parts[1].trim();
-
-            // Находим индекс слэша
-            int slashIndex = fragment.indexOf("/");
-
-            // Если слэш есть, извлекаем часть до слэша
-            if (slashIndex != -1) {
-                result = fragment.substring(0, slashIndex).trim();
-            }
-        }
-        return result;
     }
 }
 
