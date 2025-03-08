@@ -2,6 +2,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Scanner;
 
 public class Main {
@@ -33,6 +35,7 @@ public class Main {
                 int googlebotCount = 0;
                 int yandexbotCount = 0;
                 double trafficRate = 0;
+                Statistics stats = new Statistics();
 
                 while ((line = reader.readLine()) != null) {
                     lineCount++;
@@ -48,11 +51,8 @@ public class Main {
 
                     // Извлечение User-Agent и подсчет количества ботов
                     UserAgent userAgent = new UserAgent(logEntry.getUserAgent());
-//                    String userAgent = extractUserAgent(line);
                     if (!userAgent.equals("-")) {
-//                        String bots = searchBots(userAgent);
                         String botName = userAgent.getBot();
-
                         if (botName.equals("Googlebot")) {
                             googlebotCount++;
                         } else if (botName.equals("YandexBot")) {
@@ -60,9 +60,7 @@ public class Main {
                         }
                     }
                     //Подсчет статистики средней скорости трафика
-                    Statistics stats = new Statistics();
                     stats.addEntry(logEntry);
-                    trafficRate = stats.getTrafficRate();
 
                 }
 
@@ -74,8 +72,20 @@ public class Main {
                 } else {
                     System.out.println("Нет строк для анализа.");
                 }
-                System.out.println("Средний объем трафика за час: " + trafficRate + " байт/час");
+                trafficRate = stats.getTrafficRate();
+                System.out.println("Средний объем трафика за час: " + trafficRate + " МБ/час");
 
+                // Получаем доли операционных систем
+                HashMap<String, Double> osShare = new HashMap<>(stats.getOSShare());
+                System.out.println("Доли операционных систем:");
+                for (HashMap.Entry<String, Double> entry : osShare.entrySet()) {
+                    System.out.printf("%s: %.2f%%\n", entry.getKey(), entry.getValue() * 100);
+                }
+                System.out.println(osShare);
+
+                //Адреса, существующих станиц
+                HashSet<String> addressesPage = new HashSet<>(stats.getAddressesPage());
+                System.out.println("Адреса, существующих страниц: " + addressesPage);
 
             } catch (LineTooLongException e) {
                 System.err.println("Ошибка: " + e.getMessage());

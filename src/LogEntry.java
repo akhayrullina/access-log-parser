@@ -9,7 +9,7 @@ public class LogEntry {
     private final HttpMethod method; //Метод запроса
     private final String requestPath; //Путь, по которому сделан запрос, и протокол
     private final int responseCode; //Код HTTP-ответа
-    private final long responseSize; //Размер отданных данных в байтах
+    private final double responseSize; //Размер отданных данных в байтах
     private final String referer; //Путь к странице, с которой перешли на текущую страницу
     private final String userAgent; //(или UserAgent agent)
 
@@ -33,7 +33,7 @@ public class LogEntry {
 
         // Извлекаем код ответа и размер данных
         this.responseCode = Integer.parseInt(parts[8]);
-        this.responseSize = Long.parseLong(parts[9]);
+        this.responseSize = Double.parseDouble(parts[9]);
 
         // Извлекаем referer
         this.referer = parts[10].equals("\"-\"") ? null : parts[10].replace("\"", "");
@@ -64,7 +64,7 @@ public class LogEntry {
         return responseCode;
     }
 
-    public long getResponseSize() {
+    public double getResponseSize() {
         return responseSize;
     }
 
