@@ -7,16 +7,20 @@ public class Statistics {
     private double totalMB; // Общий объем трафика в мегабайтах
     private LocalDateTime minTime; // Минимальное время
     private LocalDateTime maxTime; // Максимальное время
-    private HashSet<String> addressesPage; //Адреса, существующих страниц
+    private HashSet<String> addressesPage200; //Адреса, существующих страниц
+    private HashSet<String> addressesPage404; //Адреса, несуществующих страниц
     private HashMap<String, Integer> osFrequency; // Частота встречаемости операционных систем
+    private HashMap<String, Integer> browserFrequency; // Частота встречаемости браузеров
     private long totalEntries; // Общее количество записей
 
     // Конструктор без параметров
     public Statistics() {
+        this.addressesPage404 = new HashSet<>();
         this.totalMB = 0;
         this.minTime = null;
         this.maxTime = null;
-        this.addressesPage = new HashSet<>();
+        this.addressesPage200 = new HashSet<>();
+        this.browserFrequency = new HashMap<>();
         this.osFrequency = new HashMap<>();
         this.totalEntries = 0;
     }
@@ -36,14 +40,22 @@ public class Statistics {
 
         //Кладем адреса, существующих страниц
         if (entry.getResponseCode() == 200 && entry.getReferer() != null) {
-            addressesPage.add(entry.getReferer());
+            addressesPage200.add(entry.getReferer());
         }
 
-        // Подсчет частоты встречаемости операционных систем
+        //Кладем адреса, несуществующих страниц
+        if (entry.getResponseCode() == 404 && entry.getReferer() != null) {
+            addressesPage404.add(entry.getReferer());
+        }
+
+        // Подсчет частоты встречаемости операционных систем и браузеров
         UserAgent userAgent = new UserAgent(entry.getUserAgent());
+
         String operatingSystem = userAgent.getOperatingSystem();
+        String browser = userAgent.getBrowser();
         osFrequency.put(operatingSystem, osFrequency.getOrDefault(operatingSystem, 0) + 1);
-        totalEntries++; // Увеличиваем общее количество записей
+        browserFrequency.put(browser, browserFrequency.getOrDefault(browser, 0) + 1);
+        totalEntries++;// Увеличиваем общее количество записей
     }
 
     // Метод для расчета средней скорости трафика
@@ -71,8 +83,21 @@ public class Statistics {
         return osShare;
     }
 
+    // Метод для получения долей каждого браузера
+    public HashMap<String, Double> getBrowserShare() {
+        HashMap<String, Double> browserShare = new HashMap<>();
+        for (String browser : browserFrequency.keySet()) {
+            browserShare.put(browser, (double) browserFrequency.get(browser) / totalEntries); // Доля для каждого браузера
+        }
+        return browserShare;
+    }
+
     //Геттеры
-    public HashSet<String> getAddressesPage() {
-        return addressesPage;
+    public HashSet<String> getAddressesPage200() {
+        return addressesPage200;
+    }
+
+    public HashSet<String> getAddressesPage404() {
+        return addressesPage404;
     }
 }

@@ -61,7 +61,6 @@ public class Main {
                     }
                     //Подсчет статистики средней скорости трафика
                     stats.addEntry(logEntry);
-
                 }
 
                 // Вывод результатов
@@ -83,9 +82,21 @@ public class Main {
                 }
                 System.out.println(osShare);
 
+                //Получаем доли каждого браузера
+                HashMap<String, Double> browserShare = new HashMap<>(stats.getBrowserShare());
+                System.out.println("Доли каждого браузера:");
+                for (HashMap.Entry<String, Double> entry : browserShare.entrySet()) {
+                    System.out.printf("%s: %.2f%%\n", entry.getKey(), entry.getValue() * 100);
+                }
+                System.out.println(browserShare);
+
                 //Адреса, существующих станиц
-                HashSet<String> addressesPage = new HashSet<>(stats.getAddressesPage());
-                System.out.println("Адреса, существующих страниц: " + addressesPage);
+                HashSet<String> addressesPage200 = new HashSet<>(stats.getAddressesPage200());
+                System.out.println("Адреса, существующих страниц: " + addressesPage200);
+
+                //Адреса, несуществующих станиц
+                HashSet<String> addressesPage404 = new HashSet<>(stats.getAddressesPage404());
+                System.out.println("Адреса, несуществующих страниц: " + addressesPage404);
 
             } catch (LineTooLongException e) {
                 System.err.println("Ошибка: " + e.getMessage());

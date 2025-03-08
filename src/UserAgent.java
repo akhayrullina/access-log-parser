@@ -2,6 +2,7 @@ public class UserAgent {
     private final String operatingSystem;
     private final String browser;
     private final String bot;
+    private String result;
 
     // Конструктор, который принимает строку User-Agent
     public UserAgent(String userAgentString) {
@@ -12,30 +13,36 @@ public class UserAgent {
 
     // Метод для извлечения операционной системы
     private String extractOperatingSystem(String userAgentString) {
-        if (userAgentString.contains("Windows")) {
-            return "Windows";
-        } else if (userAgentString.contains("Mac OS X") || userAgentString.contains("Macintosh")) {
-            return "macOS";
-        } else if (userAgentString.contains("Linux")) {
-            return "Linux";
-        } else {
-            return "Unknown OS"; // Если не удалось определить ОС
+        if (!userAgentString.equals("-")) {
+            if (userAgentString.contains("Windows")) {
+                return "Windows";
+            } else if (userAgentString.contains("Mac OS X") || userAgentString.contains("Macintosh")) {
+                return "macOS";
+            } else if (userAgentString.contains("Linux")) {
+                return "Linux";
+            } else {
+                return "Unknown OS"; // Если не удалось определить ОС
+            }
         }
+        return "Пустая строка";
     }
 
     // Метод для извлечения браузера
     private String extractBrowser(String userAgentString) {
-        if (userAgentString.contains("Edge")) {
-            return "Edge";
-        } else if (userAgentString.contains("Firefox")) {
-            return "Firefox";
-        } else if (userAgentString.contains("Chrome") && !userAgentString.contains("Edg")) {
-            return "Chrome";
-        } else if (userAgentString.contains("Opera") || userAgentString.contains("OPR")) {
-            return "Opera";
-        } else {
-            return "Other"; // Если не удалось определить браузер
+        if (!userAgentString.equals("-")) {
+            if (userAgentString.contains("Edge")) {
+                return "Edge";
+            } else if (userAgentString.contains("Firefox")) {
+                return "Firefox";
+            } else if (userAgentString.contains("Chrome") && !userAgentString.contains("Edg")) {
+                return "Chrome";
+            } else if (userAgentString.contains("Opera") || userAgentString.contains("OPR")) {
+                return "Opera";
+            } else {
+                return "Other"; // Если не удалось определить браузер
+            }
         }
+        return "Пустая строка";
     }
 
     //Метод находит информацию о ботах и возвращает ее
@@ -50,7 +57,6 @@ public class UserAgent {
         if (firstBrackets != -1 && lastBrackets != -1 && lastBrackets > firstBrackets) {
             informationAboutBot = userAgentString.substring(firstBrackets + 1, lastBrackets).trim();
         }
-
         return informationAboutBot;
     }
 
@@ -88,5 +94,14 @@ public class UserAgent {
     //Геттер для информации о боте
     public String getBot() {
         return bot;
+    }
+
+    @Override
+    public String toString() {
+        return "UserAgent{" +
+                "operatingSystem='" + operatingSystem + '\'' +
+                ", browser='" + browser + '\'' +
+                ", bot='" + bot + '\'' +
+                '}';
     }
 }
