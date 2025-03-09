@@ -2,16 +2,21 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 public class Statistics {
     private double totalMB; // Общий объем трафика в мегабайтах
     private LocalDateTime minTime; // Минимальное время
     private LocalDateTime maxTime; // Максимальное время
+    private long totalHours; // Общее количество часов, за которые есть записи
     private HashSet<String> addressesPage200; //Адреса, существующих страниц
     private HashSet<String> addressesPage404; //Адреса, несуществующих страниц
     private HashMap<String, Integer> osFrequency; // Частота встречаемости операционных систем
     private HashMap<String, Integer> browserFrequency; // Частота встречаемости браузеров
     private long totalEntries; // Общее количество записей
+    private long userVisits; // Количество посещений обычных пользователей
+    private long errorRequests; // Количество ошибочных запросов
+    private Set<String> uniqueUserIPs; // Уникальные IP-адреса обычных пользователей
 
     // Конструктор без параметров
     public Statistics() {
@@ -19,14 +24,19 @@ public class Statistics {
         this.totalMB = 0;
         this.minTime = null;
         this.maxTime = null;
+        this.totalHours = 0;
         this.addressesPage200 = new HashSet<>();
         this.browserFrequency = new HashMap<>();
         this.osFrequency = new HashMap<>();
         this.totalEntries = 0;
+        this.userVisits = 0;
+        this.errorRequests = 0;
+        this.uniqueUserIPs = new HashSet<>();
     }
 
     // Метод для добавления записи
     public void addEntry(LogEntry entry) {
+        totalEntries++;// Увеличиваем общее количество записей
         // Увеличиваем общий объем трафика
         totalMB += entry.getResponseSize() / 1048576.0; // 1 МБ = 1,048,576 байт;
 
@@ -37,6 +47,8 @@ public class Statistics {
         if (maxTime == null || entry.getDateTime().isAfter(maxTime)) {
             maxTime = entry.getDateTime();
         }
+        //Считаем общее количество часов
+        totalHours = Duration.between(minTime, maxTime).toHours();
 
         //Кладем адреса, существующих страниц
         if (entry.getResponseCode() == 200 && entry.getReferer() != null) {
@@ -48,6 +60,11 @@ public class Statistics {
             addressesPage404.add(entry.getReferer());
         }
 
+        // Проверяем, был ли ошибочный код ответа (4xx или 5xx)
+        if (entry.getResponseCode() >= 400 && entry.getResponseCode() < 600) {
+            errorRequests++; // Увеличиваем количество ошибочных запросов
+        }
+
         // Подсчет частоты встречаемости операционных систем и браузеров
         UserAgent userAgent = new UserAgent(entry.getUserAgent());
 
@@ -55,24 +72,54 @@ public class Statistics {
         String browser = userAgent.getBrowser();
         osFrequency.put(operatingSystem, osFrequency.getOrDefault(operatingSystem, 0) + 1);
         browserFrequency.put(browser, browserFrequency.getOrDefault(browser, 0) + 1);
-        totalEntries++;// Увеличиваем общее количество записей
+
+        // Проверяем, является ли User-Agent ботом
+        if (!isBot(userAgent)) {
+            userVisits++; // Увеличиваем количество посещений обычных пользователей
+            uniqueUserIPs.add(entry.getIpAddress()); // Добавляем уникальный IP-адрес
+        }
     }
 
-    // Метод для расчета средней скорости трафика
-    public double getTrafficRate() {
-        if (minTime == null || maxTime == null) {
-            return 0; // Если нет записей, возвращаем 0
+    //Метод, проверяющий является ли User-Agent ботом
+    public boolean isBot(UserAgent userAgent) {
+        if (userAgent.getBot() == "0") {
+            return false;
         }
+        return true;
+    }
 
-        // Вычисляем разницу в часах
-        long hours = Duration.between(minTime, maxTime).toHours();
-        if (hours == 0) {
+    // Метод для расчета среднего объема трафика за час
+    public double getTrafficRate() {
+        if (totalHours == 0) {
             return totalMB; // Если разница 0 часов, возвращаем общий трафик
         }
-
-        // Возвращаем средний объем трафика за час
-        return totalMB / hours;
+        return totalMB / totalHours;
     }
+
+    // Метод для подсчета среднего количества посещений за час
+    public double getAverageVisitsPerHour() {
+        if (totalHours == 0) {
+            return 0; // Избегаем деления на ноль
+        }
+        return (double) userVisits / totalHours;
+    }
+
+    // Метод для расчёта средней посещаемости одним пользователем
+    public double getAverageVisitsPerUser () {
+        if (uniqueUserIPs.size() == 0) {
+            return 0; // Избегаем деления на ноль
+        }
+        return (double) userVisits / uniqueUserIPs.size();
+    }
+
+    // Метод для подсчета среднего количества ошибочных запросов за час
+    public double getAverageErrorRequestsPerHour() {
+        if (totalHours == 0) {
+            return 0; // Избегаем деления на ноль
+        }
+        return (double) errorRequests / totalHours;
+    }
+
 
     // Метод для получения долей операционных систем
     public HashMap<String, Double> getOSShare() {
@@ -99,5 +146,13 @@ public class Statistics {
 
     public HashSet<String> getAddressesPage404() {
         return addressesPage404;
+    }
+
+    public long getUserVisits() {
+        return userVisits;
+    }
+
+    public double getTotalHours() {
+        return totalHours;
     }
 }

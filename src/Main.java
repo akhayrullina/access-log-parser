@@ -34,7 +34,6 @@ public class Main {
                 int lineCount = 0;
                 int googlebotCount = 0;
                 int yandexbotCount = 0;
-                double trafficRate = 0;
                 Statistics stats = new Statistics();
 
                 while ((line = reader.readLine()) != null) {
@@ -71,32 +70,37 @@ public class Main {
                 } else {
                     System.out.println("Нет строк для анализа.");
                 }
-                trafficRate = stats.getTrafficRate();
+                double trafficRate = stats.getTrafficRate();
                 System.out.println("Средний объем трафика за час: " + trafficRate + " МБ/час");
 
                 // Получаем доли операционных систем
-                HashMap<String, Double> osShare = new HashMap<>(stats.getOSShare());
+               /* HashMap<String, Double> osShare = new HashMap<>(stats.getOSShare());
                 System.out.println("Доли операционных систем:");
                 for (HashMap.Entry<String, Double> entry : osShare.entrySet()) {
                     System.out.printf("%s: %.2f%%\n", entry.getKey(), entry.getValue() * 100);
                 }
-                System.out.println(osShare);
+                System.out.println(osShare);*/
 
-                //Получаем доли каждого браузера
+                /*//Получаем доли каждого браузера
                 HashMap<String, Double> browserShare = new HashMap<>(stats.getBrowserShare());
                 System.out.println("Доли каждого браузера:");
                 for (HashMap.Entry<String, Double> entry : browserShare.entrySet()) {
                     System.out.printf("%s: %.2f%%\n", entry.getKey(), entry.getValue() * 100);
                 }
-                System.out.println(browserShare);
+                System.out.println(browserShare);*/
 
-                //Адреса, существующих станиц
+                /*//Адреса, существующих станиц
                 HashSet<String> addressesPage200 = new HashSet<>(stats.getAddressesPage200());
                 System.out.println("Адреса, существующих страниц: " + addressesPage200);
 
                 //Адреса, несуществующих станиц
                 HashSet<String> addressesPage404 = new HashSet<>(stats.getAddressesPage404());
-                System.out.println("Адреса, несуществующих страниц: " + addressesPage404);
+                System.out.println("Адреса, несуществующих страниц: " + addressesPage404);*/
+
+                //Вывод статистики
+                System.out.printf("Среднее количество посещений сайта за час: %.2f\n", stats.getAverageVisitsPerHour());
+                System.out.printf("Среднее количество ошибочных запросов в час: %.2f\n", stats.getAverageErrorRequestsPerHour());
+                System.out.printf("Средняя посещаемость одним пользователем: %.2f\n", stats.getAverageVisitsPerUser ());
 
             } catch (LineTooLongException e) {
                 System.err.println("Ошибка: " + e.getMessage());
